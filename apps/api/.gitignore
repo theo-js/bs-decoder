@@ -1,0 +1,43 @@
+# === Rust/Cargo ===
+/target/
+**/*.rs.bk
+
+# === Dépendances Cargo ===
+/Cargo.lock
+
+# (optionnel) : garder Cargo.lock si tu développes une app (pas une lib)
+
+# === Vscode / IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === MacOS ===
+.DS_Store
+
+# === Logs, caches, dumps ===
+*.log
+*.tmp
+*.bak
+*.old
+*.orig
+
+# === Tests / coverage ===
+/coverage/
+/target/coverage/
+
+# === Rust build scripts ===
+/build/
+/incremental/
+/.fingerprint/
+
+# === Node/JS (si monorepo) ===
+node_modules/
+dist/
+.env
+.env.*
+*.tsbuildinfo
+
+# === Misc ===
+*.lock
