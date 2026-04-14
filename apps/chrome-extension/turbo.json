@@ -1,5 +1,11 @@
 {
     "extends": ["//"],
-    "tasks": {}
+    "tasks": {
+        "build": {
+            "env": [
+                "PLASMO_PUBLIC_BACKEND_URL"
+            ]
+        }
+    }
 }
   
