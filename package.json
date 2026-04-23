@@ -20,8 +20,5 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ],
-  "dependencies": {
-    "@huggingface/transformers": "^4.0.1"
-  }
+  ]
 }

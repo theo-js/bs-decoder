@@ -6,18 +6,25 @@ import { isYoutubeVideoUrl } from '~helpers/youtube/isYoutubeVideoUrl';
 import { useReadCaptions } from './hooks/queries/useReadCaptions';
 import { PopupProvider } from './core';
 import './index.css';
+import { useTransformCaptions } from './hooks/mutations/useTransformCaptions';
+import { useModelStatus } from './hooks/queries/useModelStatus';
 
 function IndexPopup() {
 	// Attributes
 	const currentTabIdRef = useRef<number | null>(null);
 	const [currentTab, setCurrentTab] = useState<Tab | null>(null);
 
+	const { modelStatus } = useModelStatus();
+
 	const { data: captions, isFetching: isFetchingCaptions } = useReadCaptions();
+	const { mutate: transformCaptions } = useTransformCaptions();
 
 	// Handlers
-	function handleDecodeCaptionsFormSubmit(e: FormEvent) {
+	function handleTransformCaptionsFormSubmit(e: FormEvent) {
 		e.preventDefault();
-		console.log(captions);
+		if (!captions?.length) return;
+
+		transformCaptions(captions);
 	}
 
 	// Effects
@@ -65,6 +72,8 @@ function IndexPopup() {
 		<div className={styles.popupContainer}>
 			<h1>Welcome to BS Decoder</h1>
 
+			<strong>Model status: {modelStatus}</strong>
+
 			{!currentTab?.isYoutubeVideoUrl && (
 				<p>Please open a YouTube video page to decode the subtitles</p>
 			)}
@@ -84,7 +93,7 @@ function IndexPopup() {
 
 							<button
 								disabled={!captions}
-								onClick={handleDecodeCaptionsFormSubmit}>
+								onClick={handleTransformCaptionsFormSubmit}>
 								Decode
 							</button>
 						</>
