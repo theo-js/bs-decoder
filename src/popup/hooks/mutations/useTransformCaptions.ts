@@ -1,35 +1,45 @@
 import { useMutation } from '@tanstack/react-query';
 import type { ParsedCaption } from '~types/youtube/caption';
 import { captionsCodec } from '~helpers/captions/captions-codec';
-import { modelService } from '~background';
 
-export const useTransformCaptions = () =>
-	useMutation({
-		mutationKey: ['transformCaptions'],
-
-		mutationFn: async (captions: ParsedCaption[]): Promise<ParsedCaption[]> => {
-			console.log('Transforming captions...', captions);
-			const model = await modelService.getModel();
-			if (!model) throw new Error('Model not available');
-
-			const encodedCaptions = captionsCodec.encode(captions);
-
-			const transformedEncodedCaptions = await model(`
-        Rewrite each caption to be funny.
+export const useTransformCaptions = () => useMutation({
+	mutationKey: ['transformCaptions'],
+	mutationFn: async (captions: ParsedCaption[]): Promise<ParsedCaption[]> => {
+		const encodedCaptions = captionsCodec.encode(captions);
+		const promptContents = `
+		Here's a collection of captions that compose a text. Rewrite it entirely by "translating" the political doublespeak into what the person actually means, in a humorous way — feel free to make uncharitable assumptions about their intentions if it adds to the humor
 
 				Rules:
 				- Keep ALL <cap> tags unchanged
 				- Only modify text inside
+				- Keep the original language
+				- Understand the sentences globally
+				- Do not add any comments, only give the result
 
-        ${encodedCaptions}
-        `);
+		${encodedCaptions}
+		`;
+		const response = await fetch(
+			'https://api.groq.com/openai/v1/chat/completions',
+			{
+				method: 'POST',
+				body: JSON.stringify({
+					model: 'groq/compound',
+					messages: [{
+						role: 'user',
+						content: promptContents
+					}]
+				}),
+				headers: {
+					'Authorization': `Bearer ${process.env.PLASMO_PUBLIC_GROQ_API_KEY}`,
+					'Content-type': 'application/json',
+				}
+			}
+		);
+		const responseBody = await response.json() as { choices: { message: { reasoning: string; } }[] };
+		const transformedEncodedCaptions = responseBody.choices[0]?.message.reasoning;
 
-			console.log('transformedEncodedCaptions', transformedEncodedCaptions);
-
-			return [];
-			// const transformedCaptions = captionsCodec.decode(
-			// 	transformedEncodedCaptions.
-			// );
-			// return transformedCaptions;
-		}
-	});
+		const transformedCaptions = captionsCodec.decode(transformedEncodedCaptions);
+		console.log({ captions, transformedCaptions });
+		return transformedCaptions;
+	}
+});

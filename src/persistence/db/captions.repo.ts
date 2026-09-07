@@ -17,9 +17,13 @@ export async function readCaptions(): Promise<ParsedCaption[] | undefined> {
 	const db = await getDB();
 
 	return new Promise((resolve) => {
-		const tx = db.transaction(STORES.captions, 'readonly');
+		try {
+			const tx = db.transaction(STORES.captions, 'readonly');
 		const req = tx.objectStore(STORES.captions).get('latest');
 
 		req.onsuccess = () => resolve(req.result);
+		} catch (e) {
+			console.log({ e })
+		}
 	});
 }

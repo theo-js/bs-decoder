@@ -7,25 +7,14 @@ import { useReadCaptions } from './hooks/queries/useReadCaptions';
 import { PopupProvider } from './core';
 import './index.css';
 import { useTransformCaptions } from './hooks/mutations/useTransformCaptions';
-import { useModelStatus } from './hooks/queries/useModelStatus';
 
 function IndexPopup() {
 	// Attributes
 	const currentTabIdRef = useRef<number | null>(null);
 	const [currentTab, setCurrentTab] = useState<Tab | null>(null);
 
-	const { modelStatus } = useModelStatus();
-
 	const { data: captions, isFetching: isFetchingCaptions } = useReadCaptions();
-	const { mutate: transformCaptions } = useTransformCaptions();
-
-	// Handlers
-	function handleTransformCaptionsFormSubmit(e: FormEvent) {
-		e.preventDefault();
-		if (!captions?.length) return;
-
-		transformCaptions(captions);
-	}
+	const transformCaptions = useTransformCaptions();
 
 	// Effects
 	useEffect(() => {
@@ -72,8 +61,6 @@ function IndexPopup() {
 		<div className={styles.popupContainer}>
 			<h1>Welcome to BS Decoder</h1>
 
-			<strong>Model status: {modelStatus}</strong>
-
 			{!currentTab?.isYoutubeVideoUrl && (
 				<p>Please open a YouTube video page to decode the subtitles</p>
 			)}
@@ -92,9 +79,9 @@ function IndexPopup() {
 							)}
 
 							<button
-								disabled={!captions}
-								onClick={handleTransformCaptionsFormSubmit}>
-								Decode
+								disabled={!captions || transformCaptions.isPending}
+								onClick={() => captions && transformCaptions.mutate(captions)}>
+								{transformCaptions.isPending ? 'Decoding...' : 'Decode'}
 							</button>
 						</>
 					)}
