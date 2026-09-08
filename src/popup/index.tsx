@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '~components/ui/button';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '~components/ui/hover-card';
+import { Info } from 'lucide-react';
 import { sendToContentScript } from '@plasmohq/messaging';
 import type { Tab } from '~types/chrome/tab';
 import { isYoutubeVideoUrl } from '~helpers/youtube/isYoutubeVideoUrl';
@@ -12,11 +14,11 @@ function IndexPopup() {
 	// Attributes
 	const currentTabIdRef = useRef<number | null>(null);
 	const [currentTab, setCurrentTab] = useState<Tab | null>(null);
+	const [groqApiKey, setGroqApiKey] = useState('');
 
 	const { data: captions, isFetching: isFetchingCaptions } = useReadCaptions();
 	const transformCaptions = useTransformCaptions({
 		onSuccess: (transformedCaptions) => {
-			console.log('sending transformed captions to content script', transformedCaptions);
 			sendToContentScript({
 				name: 'captions-transformed',
 				tabId: currentTab?.id,
@@ -24,6 +26,20 @@ function IndexPopup() {
 			})
 		}
 	});
+
+	useEffect(() => {
+		chrome.storage.local.get('groqApiKey', (result) => {
+			if (chrome.runtime.lastError) {
+				console.error('Unable to load the Groq API key', chrome.runtime.lastError);
+				return;
+			}
+
+			const storedApiKey = result.groqApiKey;
+			if (typeof storedApiKey === 'string') {
+				setGroqApiKey(storedApiKey);
+			}
+		});
+	}, []);
 
 	// Effects
 	useEffect(() => {
@@ -80,6 +96,48 @@ function IndexPopup() {
 
 					{!isFetchingCaptions && (
 						<>
+							<label htmlFor="groq-api-key" className="flex items-center gap-1">
+								Groq API key
+								<HoverCard>
+									<HoverCardTrigger
+										openOnHover
+										render={
+											<button
+												type="button"
+												aria-label="How to get a Groq API key"
+												className="inline-flex size-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+											/>
+										}>
+										<Info className="size-3" />
+									</HoverCardTrigger>
+									<HoverCardContent>
+										<p className="font-medium">Get your Groq API key</p>
+										<p className="mt-1 text-muted-foreground">
+											Create a free account at console.groq.com, open the API Keys
+											section, create a key, then paste it here. It is saved only
+											in this extension&apos;s local storage.
+										</p>
+									</HoverCardContent>
+								</HoverCard>
+							</label>
+							<input
+								id="groq-api-key"
+								type="password"
+								autoComplete="off"
+								value={groqApiKey}
+								onChange={(event) => {
+									const value = event.target.value;
+									setGroqApiKey(value);
+									chrome.storage.local.set({ groqApiKey: value }, () => {
+										if (chrome.runtime.lastError) {
+											console.error('Unable to save the Groq API key', chrome.runtime.lastError);
+										}
+									});
+								}}
+								className="h-8 rounded-md border bg-background px-2 text-sm"
+								placeholder="gsk_..."
+							/>
+
 							{!captions && (
 								<p>
 									Please enable captions on the YouTube video player to start
@@ -89,8 +147,11 @@ function IndexPopup() {
 
 							{(!transformCaptions.isSuccess) && (
 								<Button
-									disabled={!captions || transformCaptions.isPending}
-									onClick={() => captions && transformCaptions.mutate(captions)}>
+									disabled={!captions || !groqApiKey.trim() || transformCaptions.isPending}
+									onClick={() =>
+										captions &&
+										transformCaptions.mutate({ captions, apiKey: groqApiKey.trim() })
+									}>
 									{transformCaptions.isPending ? 'Decoding...' : 'Decode'}
 								</Button>
 							)}

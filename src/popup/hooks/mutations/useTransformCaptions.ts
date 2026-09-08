@@ -2,11 +2,21 @@ import { useMutation, type MutationFunctionContext } from '@tanstack/react-query
 import type { ParsedCaption } from '~types/youtube/caption';
 import { captionsCodec } from '~helpers/captions/captions-codec';
 
+type TransformCaptionsVariables = {
+	captions: ParsedCaption[];
+	apiKey: string;
+};
+
 export const useTransformCaptions = ({ onSuccess }: {
-	onSuccess: ((data: ParsedCaption[], variables: ParsedCaption[], onMutateResult: unknown, context: MutationFunctionContext) => Promise<unknown> | unknown)
+	onSuccess: (
+		data: ParsedCaption[],
+		variables: TransformCaptionsVariables,
+		onMutateResult: unknown,
+		context: MutationFunctionContext
+	) => Promise<unknown> | unknown;
 }) => useMutation({
 	mutationKey: ['transformCaptions'],
-	mutationFn: async (captions: ParsedCaption[]): Promise<ParsedCaption[]> => {
+	mutationFn: async ({ captions, apiKey }: TransformCaptionsVariables): Promise<ParsedCaption[]> => {
 		const encodedCaptions = captionsCodec.encode(captions);
 		const promptContents = `
 		Here's a collection of captions that compose a text. Rewrite it entirely by "translating" the political doublespeak into what the person actually means, in a humorous way — feel free to make uncharitable assumptions about their intentions if it adds to the humor
@@ -33,11 +43,15 @@ export const useTransformCaptions = ({ onSuccess }: {
 					}]
 				}),
 				headers: {
-					'Authorization': `Bearer ${process.env.PLASMO_PUBLIC_GROQ_API_KEY}`,
+					'Authorization': `Bearer ${apiKey}`,
 					'Content-type': 'application/json',
 				}
 			}
 		);
+		if (!response.ok) {
+			throw new Error(`Groq API request failed with status ${response.status}`);
+		}
+
 		const responseBody = await response.json() as { choices: { message: { reasoning: string; } }[] };
 		const transformedEncodedCaptions = responseBody.choices[0]?.message.reasoning;
 
