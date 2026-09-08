@@ -16,6 +16,7 @@ export const useTransformCaptions = ({ onSuccess }: {
 				- Only modify text inside
 				- Use the same language as in the original captions text, not necessarily English
 				- Understand the sentences globally
+				- The resulting text must have about the same length as the original.
 				- Do not add any comments, only give the result
 
 		${encodedCaptions}
@@ -41,7 +42,6 @@ export const useTransformCaptions = ({ onSuccess }: {
 		const transformedEncodedCaptions = responseBody.choices[0]?.message.reasoning;
 
 		const transformedCaptions = captionsCodec.decode(transformedEncodedCaptions);
-		console.log({ captions, transformedCaptions });
 		return transformedCaptions;
 	},
 	onSuccess
