@@ -51,6 +51,9 @@ const YtPlayer: FC = () => {
 	);
 	const currentCaptionRef = useRef<ParsedCaption | null>(null);
 
+	const [isSpeechEnabled, setIsSpeechEnabled] = useState(false);
+	const isSpeechEnabledRef = useRef<boolean>(false);
+
 	const sortedCaptions = useMemo(
 		() => [...captions].sort((a, b) => a.start - b.start),
 		[captions]
@@ -97,8 +100,13 @@ const YtPlayer: FC = () => {
 				return;
 			}
 
+			handleCaptionChange(nextCaption);
+		}
+
+		function handleCaptionChange (nextCaption: ParsedCaption | null) {
 			currentCaptionRef.current = nextCaption;
 			setCurrentCaption(nextCaption);
+			if (nextCaption && isSpeechEnabledRef.current) speakCaption(nextCaption);
 		}
 
 		let intervalId: number | null = null;
@@ -129,6 +137,42 @@ const YtPlayer: FC = () => {
 			video.removeEventListener('seeked', handleSeeked);
 		};
 	}, [sortedCaptions]);
+
+	function handleToggleSpeech () {
+		setIsSpeechEnabled((isSpeechEnabled) => {
+			if (isSpeechEnabled) {
+				window.speechSynthesis.cancel()
+				isSpeechEnabledRef.current = false;
+				return false;
+			}
+
+			if (currentCaption) speakCaption(currentCaption);
+			isSpeechEnabledRef.current = true;
+			return true
+		});
+	}
+
+	function speakCaption (caption: ParsedCaption): void {
+		window.speechSynthesis.cancel();
+		const utterance = new SpeechSynthesisUtterance(caption.text);
+		utterance.lang = 'fr-FR';
+		utterance.rate = calculateSpeechSpeed(caption);
+		utterance.pitch = 0;
+		window.speechSynthesis.speak(utterance);
+	}
+
+	function calculateSpeechSpeed(caption: ParsedCaption): number {
+		const BASELINE_CHARS_PER_SECOND = 15;
+		
+		const durationSeconds = caption.duration / 1000;
+		if (durationSeconds <= 0) return 5; // default value if duration is invalid
+		
+		const charsPerSecond = caption.text.length / durationSeconds;
+		const ratio = charsPerSecond / BASELINE_CHARS_PER_SECOND;
+		
+		const scale = Math.round(ratio * 5);
+		return Math.min(10, Math.max(1, scale));
+	}
 
 	if (!currentCaption) return null;
 
@@ -164,14 +208,24 @@ const YtPlayer: FC = () => {
 				color: 'white',
 				font: '500 2rem/1.4 Arial, sans-serif'
 			}}>
-				<legend style={{
-					color: 'lightgreen',
-					whiteSpace: 'nowrap',
-					fontWeight: '500',
-					fontSize: '.625em'
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					gap: '1rem',
+					width: '100%'
 				}}>
-						BS decoder:
-				</legend>
+					<legend style={{
+						color: 'lightgreen',
+						whiteSpace: 'nowrap',
+						fontWeight: '500',
+						fontSize: '.625em',
+					}}>
+							BS decoder:
+					</legend>
+
+					<button onClick={handleToggleSpeech}>Speech {isSpeechEnabled ? 'enabled' : 'disabled'}</button>
+				</div>
 
 				<div style={{ minWidth: '38rem' }}>
 					{currentCaption.text}
