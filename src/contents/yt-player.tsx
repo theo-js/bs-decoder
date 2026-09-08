@@ -1,53 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import type {
 	PlasmoCSConfig,
-	PlasmoGetInlineAnchor,
+	PlasmoGetOverlayAnchor,
 	PlasmoGetStyle
 } from 'plasmo';
 import type { ParsedCaption } from '~types/youtube/caption';
 
 export const config: PlasmoCSConfig = {
-	matches: ['https://www.youtube.com/*']
+	matches: ['https://www.youtube.com/*'],
+	world: 'MAIN'
 };
 
 const SYNC_INTERVAL_IN_MS = 50;
 
-export const getInlineAnchor: PlasmoGetInlineAnchor = async () => {
-	const player = document.querySelector<HTMLElement>('#movie_player');
-
-	if (!player) {
-		throw new Error('YouTube player was not found');
-	}
+export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () => {
+	const player = document.querySelector<HTMLElement>('video');
+	if (!player) throw new Error('YouTube player was not found');
 
 	return player;
-};
-
-export const getStyle: PlasmoGetStyle = () => {
-	const style = document.createElement('style');
-	style.textContent = `
-		:host {
-			position: absolute;
-			inset: 0;
-			z-index: 2;
-			pointer-events: none;
-		}
-
-		.yt-player-dialogue {
-			position: absolute;
-			left: 50%;
-			bottom: 12%;
-			transform: translateX(-50%);
-			max-width: min(80%, 720px);
-			padding: 0.5rem 0.75rem;
-			border-radius: 0.25rem;
-			background: rgb(0 0 0 / 80%);
-			color: white;
-			font: 500 1.25rem/1.4 Arial, sans-serif;
-			text-align: center;
-			text-wrap: balance;
-		}
-	`;
-	return style;
 };
 
 function findCaptionAtTime(captions: ParsedCaption[], timeInSeconds: number) {
@@ -74,7 +44,7 @@ function findCaptionAtTime(captions: ParsedCaption[], timeInSeconds: number) {
 		: null;
 }
 
-function YtPlayer() {
+const YtPlayer: FC = () => {
 	const [captions, setCaptions] = useState<ParsedCaption[]>([]);
 	const [currentCaption, setCurrentCaption] = useState<ParsedCaption | null>(
 		null
@@ -163,10 +133,52 @@ function YtPlayer() {
 	if (!currentCaption) return null;
 
 	return (
-		<div className="yt-player-dialogue" role="dialog" aria-label="Caption">
-			{currentCaption.text}
+		<div style={{ position: 'relative', margin: '1rem' }}>
+			<div style={{
+				width: '2rem',
+				height: '2rem',
+				border: '1rem solid rgb(0 0 0 / 80%)',
+				background: 'lightgreen',
+				borderRadius: '100%'
+			}} />
+
+			<div style={{
+				position: 'absolute',
+				left: 'calc(100% + 1rem',
+				top: '13px',
+				borderTop: '7px solid transparent',
+				borderBottom: '7px solid transparent',
+				borderRight: '10px solid rgb(0 0 0 / 80%)',
+			}} />
+
+			<div role="dialog" aria-label="Caption" style={{
+				position: 'absolute',
+				left: 'calc(100% + 2rem)',
+				top: '-0.5rem',
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: 'flex-start',
+				padding: '1rem 1.5rem',
+				borderRadius: '0.5rem',
+				background: 'rgb(0 0 0 / 80%)',
+				color: 'white',
+				font: '500 2rem/1.4 Arial, sans-serif'
+			}}>
+				<legend style={{
+					color: 'lightgreen',
+					whiteSpace: 'nowrap',
+					fontWeight: '500',
+					fontSize: '.625em'
+				}}>
+						BS decoder:
+				</legend>
+
+				<div style={{ minWidth: '38rem' }}>
+					{currentCaption.text}
+				</div>
+			</div>
 		</div>
 	);
-}
+};
 
 export default YtPlayer;
