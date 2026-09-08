@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import {} from '@plasmohq/messaging';
+import { sendToContentScript } from '@plasmohq/messaging';
 import styles from './index.module.css';
 import type { Tab } from '~types/chrome/tab';
 import { isYoutubeVideoUrl } from '~helpers/youtube/isYoutubeVideoUrl';
 import { useReadCaptions } from './hooks/queries/useReadCaptions';
+import { useTransformCaptions } from './hooks/mutations/useTransformCaptions';
 import { PopupProvider } from './core';
 import './index.css';
-import { useTransformCaptions } from './hooks/mutations/useTransformCaptions';
 
 function IndexPopup() {
 	// Attributes
@@ -14,7 +14,16 @@ function IndexPopup() {
 	const [currentTab, setCurrentTab] = useState<Tab | null>(null);
 
 	const { data: captions, isFetching: isFetchingCaptions } = useReadCaptions();
-	const transformCaptions = useTransformCaptions();
+	const transformCaptions = useTransformCaptions({
+		onSuccess: (transformedCaptions) => {
+			console.log('sending transformed captions to content script', transformedCaptions);
+			sendToContentScript({
+				name: 'captions-transformed',
+				tabId: currentTab?.id,
+				body: transformedCaptions
+			})
+		}
+	});
 
 	// Effects
 	useEffect(() => {
@@ -28,7 +37,7 @@ function IndexPopup() {
 					? {
 							id: tab.id,
 							url: tab.url,
-							isYoutubeVideoUrl: isYoutubeVideoUrl(tab.url ?? '')
+							isYoutubeVideoUrl: isYoutubeVideoUrl(tab.url ?? ''),
 						}
 					: null
 			);
@@ -78,11 +87,17 @@ function IndexPopup() {
 								</p>
 							)}
 
-							<button
-								disabled={!captions || transformCaptions.isPending}
-								onClick={() => captions && transformCaptions.mutate(captions)}>
-								{transformCaptions.isPending ? 'Decoding...' : 'Decode'}
-							</button>
+							{(!transformCaptions.isSuccess) && (
+								<button
+									disabled={!captions || transformCaptions.isPending}
+									onClick={() => captions && transformCaptions.mutate(captions)}>
+									{transformCaptions.isPending ? 'Decoding...' : 'Decode'}
+								</button>
+							)}
+
+							{transformCaptions.isSuccess && <p>
+								The BS has been decoded. You can now read the result directly on top of your video.
+							</p>}
 						</>
 					)}
 				</>

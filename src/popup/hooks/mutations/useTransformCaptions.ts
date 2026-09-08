@@ -1,8 +1,10 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, type MutationFunctionContext } from '@tanstack/react-query';
 import type { ParsedCaption } from '~types/youtube/caption';
 import { captionsCodec } from '~helpers/captions/captions-codec';
 
-export const useTransformCaptions = () => useMutation({
+export const useTransformCaptions = ({ onSuccess }: {
+	onSuccess: ((data: ParsedCaption[], variables: ParsedCaption[], onMutateResult: unknown, context: MutationFunctionContext) => Promise<unknown> | unknown)
+}) => useMutation({
 	mutationKey: ['transformCaptions'],
 	mutationFn: async (captions: ParsedCaption[]): Promise<ParsedCaption[]> => {
 		const encodedCaptions = captionsCodec.encode(captions);
@@ -12,7 +14,7 @@ export const useTransformCaptions = () => useMutation({
 				Rules:
 				- Keep ALL <cap> tags unchanged
 				- Only modify text inside
-				- Keep the original language
+				- Use the same language as in the original captions text, not necessarily English
 				- Understand the sentences globally
 				- Do not add any comments, only give the result
 
@@ -41,5 +43,6 @@ export const useTransformCaptions = () => useMutation({
 		const transformedCaptions = captionsCodec.decode(transformedEncodedCaptions);
 		console.log({ captions, transformedCaptions });
 		return transformedCaptions;
-	}
+	},
+	onSuccess
 });
