@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '~components/ui/button';
 import { sendToContentScript } from '@plasmohq/messaging';
-import styles from './index.module.css';
 import type { Tab } from '~types/chrome/tab';
 import { isYoutubeVideoUrl } from '~helpers/youtube/isYoutubeVideoUrl';
 import { useReadCaptions } from './hooks/queries/useReadCaptions';
 import { useTransformCaptions } from './hooks/mutations/useTransformCaptions';
 import { PopupProvider } from './core';
-import './index.css';
+import '~../style.css';
 
 function IndexPopup() {
 	// Attributes
@@ -67,8 +67,8 @@ function IndexPopup() {
 
 	// Render
 	return (
-		<div className={styles.popupContainer}>
-			<h1>Welcome to BS Decoder</h1>
+		<div className="w-[300px] p-4 flex flex-col gap-1">
+			<h1 className='text-primary'>BS Decoder</h1>
 
 			{!currentTab?.isYoutubeVideoUrl && (
 				<p>Please open a YouTube video page to decode the subtitles</p>
@@ -88,11 +88,11 @@ function IndexPopup() {
 							)}
 
 							{(!transformCaptions.isSuccess) && (
-								<button
+								<Button
 									disabled={!captions || transformCaptions.isPending}
 									onClick={() => captions && transformCaptions.mutate(captions)}>
 									{transformCaptions.isPending ? 'Decoding...' : 'Decode'}
-								</button>
+								</Button>
 							)}
 
 							{transformCaptions.isSuccess && <p>

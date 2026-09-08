@@ -2,14 +2,19 @@ import { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import type {
 	PlasmoCSConfig,
 	PlasmoGetOverlayAnchor,
-	PlasmoGetStyle
 } from 'plasmo';
 import type { ParsedCaption } from '~types/youtube/caption';
+import { SpeechIcon } from 'lucide-react';
+import { Toggle } from '~components/ui/toggle';
+import { Button } from '~components/ui/button';
+import { cn } from 'cn';
 
 export const config: PlasmoCSConfig = {
 	matches: ['https://www.youtube.com/*'],
 	world: 'MAIN'
 };
+
+export { loadTailwindClassesIntoContentScriptUi as getStyle } from 'lib/utils';
 
 const SYNC_INTERVAL_IN_MS = 50;
 
@@ -174,61 +179,42 @@ const YtPlayer: FC = () => {
 		return Math.min(10, Math.max(1, scale));
 	}
 
-	if (!currentCaption) return null;
+	// if (!currentCaption) return null;
 
 	return (
-		<div style={{ position: 'relative', margin: '1rem' }}>
-			<div style={{
-				width: '2rem',
-				height: '2rem',
-				border: '1rem solid rgb(0 0 0 / 80%)',
-				background: 'lightgreen',
-				borderRadius: '100%'
-			}} />
+		<div className="relative m-4">
+			<div className="h-8 w-8 rounded-full border-[1rem] border-black/80 bg-[lightgreen] box-content" />
 
-			<div style={{
-				position: 'absolute',
-				left: 'calc(100% + 1rem',
-				top: '13px',
-				borderTop: '7px solid transparent',
-				borderBottom: '7px solid transparent',
-				borderRight: '10px solid rgb(0 0 0 / 80%)',
-			}} />
+			<div
+				className="absolute left-[calc(100%+1rem)] top-[13px] border-b-[7px] border-t-[7px] border-b-transparent border-t-transparent border-r-[10px] border-r-black/80"
+			/>
 
-			<div role="dialog" aria-label="Caption" style={{
-				position: 'absolute',
-				left: 'calc(100% + 2rem)',
-				top: '-0.5rem',
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'flex-start',
-				padding: '1rem 1.5rem',
-				borderRadius: '0.5rem',
-				background: 'rgb(0 0 0 / 80%)',
-				color: 'white',
-				font: '500 2rem/1.4 Arial, sans-serif'
-			}}>
-				<div style={{
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'space-between',
-					gap: '1rem',
-					width: '100%'
-				}}>
-					<legend style={{
-						color: 'lightgreen',
-						whiteSpace: 'nowrap',
-						fontWeight: '500',
-						fontSize: '.625em',
-					}}>
-							BS decoder:
-					</legend>
+			<div
+				role="dialog"
+				aria-label="Caption"
+				className="absolute left-[calc(100%+2rem)] top-[-0.5rem] flex flex-col items-start rounded-lg bg-black/80 px-6 py-4 text-white"
+				style={{
+				font: "500 2rem/1.4 Arial, sans-serif",
+				}}
+			>
+				<div className="flex w-full items-center justify-between gap-4">
+				<legend className="whitespace-nowrap text-[0.625em] font-medium text-[lightgreen]">
+					BS decoder:
+				</legend>
 
-					<button onClick={handleToggleSpeech}>Speech {isSpeechEnabled ? 'enabled' : 'disabled'}</button>
+				<Toggle
+					onClick={handleToggleSpeech}
+					title={`Speech ${isSpeechEnabled ? 'enabled' : 'disabled'}`}
+					className={cn('text-[0.625em]', isSpeechEnabled && 'text-[lightgreen] hover:text-[lightgreen] focus:text-[lightgreen]')}
+				>
+					Speech&nbsp;
+					<SpeechIcon className='w-8 h-8' />
+				</Toggle>
 				</div>
 
-				<div style={{ minWidth: '38rem' }}>
-					{currentCaption.text}
+				<div className="min-w-[38rem]">
+				{/* {currentCaption.text} */}
+				foo
 				</div>
 			</div>
 		</div>
