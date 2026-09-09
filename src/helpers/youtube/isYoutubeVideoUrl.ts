@@ -15,13 +15,19 @@ export function isYoutubeVideoUrl(url: string): boolean {
 		}
 
 		// For youtube.com
-		// Verify that the route is /watch
-		if (parsedUrl.pathname !== '/watch') {
-			return false;
-		}
+		// Verify that the route is /shorts
+		if (/^\/shorts/.test(parsedUrl.pathname))
+			return true;
+		
+		if (
+			// or /watch
+			/^\/watch/.test(parsedUrl.pathname)
+			// Verify that search param 'v' exists
+			&& parsedUrl.searchParams.has('v')
+		)
+			return true;
 
-		// Verify that search param 'v' exists
-		return parsedUrl.searchParams.has('v');
+		return false;
 	} catch {
 		// Invalid URL
 		return false;
