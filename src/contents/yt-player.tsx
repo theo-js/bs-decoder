@@ -146,6 +146,23 @@ const YtPlayer: FC = () => {
 		};
 	}, [sortedCaptions]);
 
+	useEffect(() => {
+		// Handle page change
+		window.addEventListener('message', (event: MessageEvent) => {
+			if (event.source !== window) return;
+			if (event.data?.source !== 'page-changed-relay') return;
+
+			resetCaptions();
+		});
+	}, []);
+
+	function resetCaptions() {
+		window.speechSynthesis.cancel();
+		setCaptions([]);
+		setCurrentCaption(null);
+		currentCaptionRef.current = null;
+	}
+
 	function handleToggleSpeech () {
 		setIsSpeechEnabled((isSpeechEnabled) => {
 			if (isSpeechEnabled) {

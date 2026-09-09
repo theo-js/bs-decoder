@@ -5,10 +5,10 @@ export const config: PlasmoCSConfig = {
 }
 
 chrome.runtime.onMessage.addListener((request) => {
-    if (request.name !== 'captions-transformed') return;
+    if (request.name !== 'page-changed') return;
     
     window.postMessage({
-        source: 'captions-transformed-relay',
+        source: 'page-changed-relay',
         payload: request.body
     }, "*")
 });

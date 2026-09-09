@@ -45,7 +45,8 @@
 		"permissions": [
 			"activeTab",
 			"scripting",
-			"storage"
+			"storage",
+			"webNavigation"
 		]
 	}
 }
