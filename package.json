@@ -1,8 +1,8 @@
 {
 	"name": "bs-decoder",
-	"displayName": "BS Decoder – Chrome Extension",
+	"displayName": "BS Decoder",
 	"version": "0.0.1",
-	"description": "Frontend interface and content scripts for the BS Decoder Chrome extension.",
+	"description": "Turn corporate and diplomatic nonsense into honest sentences.",
 	"author": "Théo Bayenet <dev.js.theo@gmail.com>",
 	"scripts": {
 		"dev": "plasmo dev",
