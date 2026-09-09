@@ -1,10 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '~components/ui/button';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '~components/ui/hover-card';
-import { Info, KeyRound, Sparkles, Video } from 'lucide-react';
-import { sendToBackground, sendToContentScript } from '@plasmohq/messaging';
-import type { Tab } from '~types/chrome/tab';
-import { isYoutubeVideoUrl } from '~helpers/youtube/isYoutubeVideoUrl';
+import { Sparkles, Video } from 'lucide-react';
+import { sendToBackground } from '@plasmohq/messaging';
 import { useReadCaptions } from './hooks/queries/useReadCaptions';
 import { GroqApiKeyField } from './components/GroqApiKeyField';
 import type { ParsedCaption } from '~types/youtube/caption';
