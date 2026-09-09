@@ -13,7 +13,7 @@ export function useTaskState<DataType, ErrorType>({
     useEffect(() => {
         (async () => {
             const { [taskId]: storedTask } = await chrome.storage.session.get(taskId);
-            if ('status' in storedTask) setTaskState(storedTask);
+            if (storedTask) setTaskState(storedTask);
         })();
     }, [taskId]);
 
