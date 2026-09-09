@@ -6,9 +6,9 @@ import type {
 import type { ParsedCaption } from '~types/youtube/caption';
 import { SpeechIcon } from 'lucide-react';
 import { Toggle } from '~components/ui/toggle';
-import { Button } from '~components/ui/button';
 import { cn } from 'cn';
 import { DecoderIndicator } from '~components/ui/decoder-indicator';
+import { franc } from 'lib/franc';
 
 export const config: PlasmoCSConfig = {
 	matches: ['https://www.youtube.com/*'],
@@ -64,6 +64,8 @@ const YtPlayer: FC = () => {
 		() => [...captions].sort((a, b) => a.start - b.start),
 		[captions]
 	);
+
+	const captionsLanguage = useMemo(() => franc(captions.map(c => c.text).join(' ')), [captions]);
 
 	useEffect(() => {
 		function handleCaptions(event: MessageEvent) {
@@ -161,13 +163,16 @@ const YtPlayer: FC = () => {
 	function speakCaption (caption: ParsedCaption): void {
 		window.speechSynthesis.cancel();
 		const utterance = new SpeechSynthesisUtterance(caption.text);
-		utterance.lang = 'fr-FR';
-		utterance.rate = calculateSpeechSpeed(caption);
+		utterance.lang = captionsLanguage;
+		const utteranceRate = calculateSpeechSpeed({ caption, language: captionsLanguage });
+		if (typeof utteranceRate === 'number') utterance.rate = utteranceRate;
 		utterance.pitch = 0;
 		window.speechSynthesis.speak(utterance);
 	}
 
-	function calculateSpeechSpeed(caption: ParsedCaption): number {
+	function calculateSpeechSpeed({ caption, language }: { caption: ParsedCaption; language: string; }): number | undefined {
+		if (language !== 'fr') return; // only works well for French
+
 		const BASELINE_CHARS_PER_SECOND = 15;
 		
 		const durationSeconds = caption.duration / 1000;
