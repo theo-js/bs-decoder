@@ -2,71 +2,38 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '~components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '~components/ui/hover-card';
 import { Info, KeyRound, Sparkles, Video } from 'lucide-react';
-import { sendToContentScript } from '@plasmohq/messaging';
+import { sendToBackground, sendToContentScript } from '@plasmohq/messaging';
 import type { Tab } from '~types/chrome/tab';
 import { isYoutubeVideoUrl } from '~helpers/youtube/isYoutubeVideoUrl';
 import { useReadCaptions } from './hooks/queries/useReadCaptions';
-import { useTransformCaptions } from './hooks/mutations/useTransformCaptions';
+import { GroqApiKeyField } from './components/GroqApiKeyField';
+import type { ParsedCaption } from '~types/youtube/caption';
+import type { TransformCaptionsParams } from '~background/messages/transform-captions';
+import { TASK_IDS } from '~persistence/extension-storage/schema';
+import { useTaskState } from './hooks/useTaskState';
+import { useCurrentTab } from './core/useCurrentTab';
 import { PopupProvider } from './core';
 import '~../style.css';
-import { GroqApiKeyField } from './components/GroqApiKeyField';
 
 function IndexPopup() {
 	// Attributes
-	const currentTabIdRef = useRef<number | null>(null);
-	const [currentTab, setCurrentTab] = useState<Tab | null>(null);
+	const { currentTab } = useCurrentTab();
 	const [groqApiKey, setGroqApiKey] = useState('');
 
 	const { data: captions, isFetching: isFetchingCaptions } = useReadCaptions();
-	const transformCaptions = useTransformCaptions({
-		onSuccess: (transformedCaptions) => {
-			sendToContentScript({
-				name: 'captions-transformed',
-				tabId: currentTab?.id,
-				body: transformedCaptions
-			})
-		}
+	const [transformCaptionsTask, setTransformCaptionsTask] = useTaskState<ParsedCaption[], string>({
+		taskId: TASK_IDS.transformCaptionsTask
 	});
 
-	// Effects
-	useEffect(() => {
-		// Get initial state of the current tab
-		chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-			if (tabs.length === 0) return;
-			const tab = tabs[0];
-			currentTabIdRef.current = tab.id ?? null;
-			setCurrentTab(
-				tab.id && tab.url
-					? {
-							id: tab.id,
-							url: tab.url,
-							isYoutubeVideoUrl: isYoutubeVideoUrl(tab.url ?? ''),
-						}
-					: null
-			);
-		});
+	function handleTransformCaptionsClick() {
+		if (!captions?.length || !groqApiKey) return;
 
-		// Handle URL changes (only for current tab)
-		function handleTabUpdated(
-			tabId: number,
-			changeInfo: chrome.tabs.TabChangeInfo
-		) {
-			if (tabId === currentTabIdRef.current && changeInfo.url) {
-				setCurrentTab((prev) => ({
-					id: prev?.id ?? tabId,
-					url: changeInfo.url ?? '',
-					isYoutubeVideoUrl: isYoutubeVideoUrl(changeInfo.url ?? '')
-				}));
-			}
-		}
-
-		chrome.tabs.onUpdated.addListener(handleTabUpdated);
-
-		// Cleanup when closing popup
-		return () => {
-			chrome.tabs.onUpdated.removeListener(handleTabUpdated);
-		};
-	}, []);
+		setTransformCaptionsTask({ status: 'pending' });
+		sendToBackground<TransformCaptionsParams>({
+			name: 'transform-captions',
+			body: { captions, groqApiKey, tabId: currentTab?.id }
+		})
+	}
 
 	// Render
 	return (
@@ -107,27 +74,22 @@ function IndexPopup() {
 						<>
 							<GroqApiKeyField {...{ groqApiKey, setGroqApiKey }} />
 
-							{!captions && (
+							{!captions?.length && (
 								<p className="helper-copy">Turn on YouTube captions to make the decoder available.</p>
 							)}
 
-							{(!transformCaptions.isSuccess) && (
-								<Button
-									className="decode-button"
-									disabled={!captions || !groqApiKey.trim() || transformCaptions.isPending}
-									onClick={() =>
-										captions &&
-										transformCaptions.mutate({ captions, apiKey: groqApiKey.trim() })
-									}>
-									{transformCaptions.isPending ? 'Finding the subtext…' : 'Decode the subtext'}
-								</Button>
-							)}
+							<Button
+								className="decode-button"
+								disabled={!captions?.length || !groqApiKey.trim() || transformCaptionsTask.status === 'pending'}
+								onClick={handleTransformCaptionsClick}>
+								{transformCaptionsTask.status === 'pending' ? 'Finding the subtext…' : 'Decode the subtext'}
+							</Button>
 
-							{transformCaptions.isSuccess && <p>
+							{transformCaptionsTask.status === 'success' && <p>
 								<span className="success-title">Decoded.</span> Read the clearer version directly on your video.
 							</p>}
 
-							{transformCaptions.isError && <p className="text-red-500">
+							{transformCaptionsTask.status === 'error' && <p className="text-red-500">
 								Error: check your Groq key, or wait (you may have hit your token limit).
 							</p>}
 						</>
