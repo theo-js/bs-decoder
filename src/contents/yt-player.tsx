@@ -8,6 +8,7 @@ import { SpeechIcon } from 'lucide-react';
 import { Toggle } from '~components/ui/toggle';
 import { Button } from '~components/ui/button';
 import { cn } from 'cn';
+import { DecoderIndicator } from '~components/ui/decoder-indicator';
 
 export const config: PlasmoCSConfig = {
 	matches: ['https://www.youtube.com/*'],
@@ -179,11 +180,11 @@ const YtPlayer: FC = () => {
 		return Math.min(10, Math.max(1, scale));
 	}
 
-	// if (!currentCaption) return null;
+	if (!currentCaption) return null;
 
 	return (
 		<div className="relative m-4">
-			<div className="h-8 w-8 rounded-full border-[1rem] border-black/80 bg-[lightgreen] box-content" />
+			<DecoderIndicator />
 
 			<div
 				className="absolute left-[calc(100%+1rem)] top-[13px] border-b-[7px] border-t-[7px] border-b-transparent border-t-transparent border-r-[10px] border-r-black/80"
@@ -198,14 +199,14 @@ const YtPlayer: FC = () => {
 				}}
 			>
 				<div className="flex w-full items-center justify-between gap-4">
-				<legend className="whitespace-nowrap text-[0.625em] font-medium text-[lightgreen]">
+				<legend className="whitespace-nowrap text-[0.625em] font-medium text-[#8b5cf6]">
 					BS decoder:
 				</legend>
 
 				<Toggle
 					onClick={handleToggleSpeech}
 					title={`Speech ${isSpeechEnabled ? 'enabled' : 'disabled'}`}
-					className={cn('text-[0.625em]', isSpeechEnabled && 'text-[lightgreen] hover:text-[lightgreen] focus:text-[lightgreen]')}
+					className={cn('text-[0.625em] text-white/80', isSpeechEnabled && 'text-[#8b5cf6] hover:text-[#8b5cf6] focus:text-[#8b5cf6]')}
 				>
 					Speech&nbsp;
 					<SpeechIcon className='w-8 h-8' />
@@ -213,8 +214,7 @@ const YtPlayer: FC = () => {
 				</div>
 
 				<div className="min-w-[38rem]">
-				{/* {currentCaption.text} */}
-				foo
+					{currentCaption.text}
 				</div>
 			</div>
 		</div>

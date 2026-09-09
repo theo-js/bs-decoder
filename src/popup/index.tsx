@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '~components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '~components/ui/hover-card';
-import { Info } from 'lucide-react';
+import { Info, KeyRound, Sparkles, Video } from 'lucide-react';
 import { sendToContentScript } from '@plasmohq/messaging';
 import type { Tab } from '~types/chrome/tab';
 import { isYoutubeVideoUrl } from '~helpers/youtube/isYoutubeVideoUrl';
@@ -9,6 +9,7 @@ import { useReadCaptions } from './hooks/queries/useReadCaptions';
 import { useTransformCaptions } from './hooks/mutations/useTransformCaptions';
 import { PopupProvider } from './core';
 import '~../style.css';
+import { GroqApiKeyField } from './components/GroqApiKeyField';
 
 function IndexPopup() {
 	// Attributes
@@ -26,20 +27,6 @@ function IndexPopup() {
 			})
 		}
 	});
-
-	useEffect(() => {
-		chrome.storage.local.get('groqApiKey', (result) => {
-			if (chrome.runtime.lastError) {
-				console.error('Unable to load the Groq API key', chrome.runtime.lastError);
-				return;
-			}
-
-			const storedApiKey = result.groqApiKey;
-			if (typeof storedApiKey === 'string') {
-				setGroqApiKey(storedApiKey);
-			}
-		});
-	}, []);
 
 	// Effects
 	useEffect(() => {
@@ -83,86 +70,72 @@ function IndexPopup() {
 
 	// Render
 	return (
-		<div className="w-[300px] p-4 flex flex-col gap-1">
-			<h1 className='text-primary'>BS Decoder</h1>
+		<div className="popup-shell w-[360px]">
+			<header className="popup-header">
+				<div className="brand-mark" aria-hidden="true">
+					<Sparkles className="size-5" />
+				</div>
+				<div>
+					<p className="brand-name">BS Decoder</p>
+					<p className="brand-tagline">Everyone talks. We translate.</p>
+				</div>
+			</header>
 
 			{!currentTab?.isYoutubeVideoUrl && (
-				<p>Please open a YouTube video page to decode the subtitles</p>
+				<>
+					<div className="status-card">
+						<Video className="status-icon" />
+						<div>
+							<p className="status-title">Ready when you are</p>
+							<p className="status-copy">Open a YouTube video to translate the doublespeak in its captions.</p>
+						</div>
+					</div>
+
+					<GroqApiKeyField {...{ groqApiKey, setGroqApiKey }} />
+				</>
 			)}
 
 			{currentTab?.isYoutubeVideoUrl && (
-				<>
-					{isFetchingCaptions && <p>Searching for captions...</p>}
+				<div className="popup-content">
+					<div className="eyebrow">THE TRANSLATOR FOR SPEECHES</div>
+					<h1>Nobody talks straight anymore.</h1>
+					<p className="intro-copy">We turn corporate and diplomatic nonsense into honest sentences.</p>
+
+					{isFetchingCaptions && <div className="status-card"><span className="status-pulse" /> Looking for captions…</div>}
 
 					{!isFetchingCaptions && (
 						<>
-							<label htmlFor="groq-api-key" className="flex items-center gap-1">
-								Groq API key
-								<HoverCard>
-									<HoverCardTrigger
-										openOnHover
-										render={
-											<button
-												type="button"
-												aria-label="How to get a Groq API key"
-												className="inline-flex size-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
-											/>
-										}>
-										<Info className="size-3" />
-									</HoverCardTrigger>
-									<HoverCardContent>
-										<p className="font-medium">Get your Groq API key</p>
-										<p className="mt-1 text-muted-foreground">
-											Create a free account at console.groq.com, open the API Keys
-											section, create a key, then paste it here. It is saved only
-											in this extension&apos;s local storage.
-										</p>
-									</HoverCardContent>
-								</HoverCard>
-							</label>
-							<input
-								id="groq-api-key"
-								type="password"
-								autoComplete="off"
-								value={groqApiKey}
-								onChange={(event) => {
-									const value = event.target.value;
-									setGroqApiKey(value);
-									chrome.storage.local.set({ groqApiKey: value }, () => {
-										if (chrome.runtime.lastError) {
-											console.error('Unable to save the Groq API key', chrome.runtime.lastError);
-										}
-									});
-								}}
-								className="h-8 rounded-md border bg-background px-2 text-sm"
-								placeholder="gsk_..."
-							/>
+							<GroqApiKeyField {...{ groqApiKey, setGroqApiKey }} />
 
 							{!captions && (
-								<p>
-									Please enable captions on the YouTube video player to start
-									decoding
-								</p>
+								<p className="helper-copy">Turn on YouTube captions to make the decoder available.</p>
 							)}
 
 							{(!transformCaptions.isSuccess) && (
 								<Button
+									className="decode-button"
 									disabled={!captions || !groqApiKey.trim() || transformCaptions.isPending}
 									onClick={() =>
 										captions &&
 										transformCaptions.mutate({ captions, apiKey: groqApiKey.trim() })
 									}>
-									{transformCaptions.isPending ? 'Decoding...' : 'Decode'}
+									{transformCaptions.isPending ? 'Finding the subtext…' : 'Decode the subtext'}
 								</Button>
 							)}
 
 							{transformCaptions.isSuccess && <p>
-								The BS has been decoded. You can now read the result directly on top of your video.
+								<span className="success-title">Decoded.</span> Read the clearer version directly on your video.
+							</p>}
+
+							{transformCaptions.isError && <p className="text-red-500">
+								Error: check your Groq key, or wait (you may have hit your token limit).
 							</p>}
 						</>
 					)}
-				</>
+				</div>
 			)}
+			
+			<footer className="popup-footer">Your key stays in this browser.</footer>
 		</div>
 	);
 }

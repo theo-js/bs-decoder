@@ -14,7 +14,7 @@ function HoverCardContent({
 			<HoverCardPrimitive.Positioner sideOffset={4}>
 				<HoverCardPrimitive.Popup
 					className={cn(
-						'z-50 w-64 rounded-md border bg-popover p-3 text-sm text-popover-foreground shadow-md outline-none',
+						'z-50 w-64 rounded-md border bg-white p-3 text-sm text-gray-500 shadow-md outline-none',
 						className
 					)}
 					{...props}
