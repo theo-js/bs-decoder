@@ -18,7 +18,7 @@ const handler: PlasmoMessaging.Handler<TransformCaptionsParams> = async (req) =>
             - Keep ALL <cap> tags unchanged.
             - Only modify text inside.
             - Understand the sentences globally.
-            - Use the same language as in the original captions text, not necessarily English.
+            - Output in source language ONLY. This is not translation, never switch language.
             - The resulting text must have about the same length as the original.
             - Do not add any comments, only give the result.
 
