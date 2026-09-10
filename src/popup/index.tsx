@@ -87,7 +87,7 @@ function IndexPopup() {
 							</p>}
 
 							{transformCaptionsTask.status === 'error' && <p className="text-red-500">
-								Error: check your Groq key, or wait (you may have hit your token limit).
+								{transformCaptionsTask.error}
 							</p>}
 						</>
 					)}

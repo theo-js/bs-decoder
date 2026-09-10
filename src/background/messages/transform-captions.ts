@@ -44,6 +44,13 @@ const handler: PlasmoMessaging.Handler<TransformCaptionsParams> = async (req) =>
             }
         );
         if (!response.ok) {
+            // Forward original error
+            let responseBody: { error?: { message: string; type: string; code: string; }; } | null = null;
+            try { responseBody = await response.json(); } catch {}
+            const originalErrorMessage = responseBody?.error?.message;
+            if (originalErrorMessage) throw new Error(originalErrorMessage);
+
+            // Failed to get original error: display response status
             throw new Error(`Groq API request failed with status ${response.status}`);
         }
 
