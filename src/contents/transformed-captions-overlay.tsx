@@ -50,7 +50,7 @@ function findCaptionAtTime(captions: ParsedCaption[], timeInSeconds: number) {
 		: null;
 }
 
-const YtPlayer: FC = () => {
+const TransformedCaptionsOverlay: FC = () => {
 	const [captions, setCaptions] = useState<ParsedCaption[]>([]);
 	const [currentCaption, setCurrentCaption] = useState<ParsedCaption | null>(
 		null
@@ -243,4 +243,4 @@ const YtPlayer: FC = () => {
 	);
 };
 
-export default YtPlayer;
+export default TransformedCaptionsOverlay;
